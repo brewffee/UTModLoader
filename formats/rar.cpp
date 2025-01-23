@@ -6,29 +6,25 @@
 #include <iostream>
 #include <unarr.h>
 
-namespace fs = std::filesystem;
 using namespace format;
 
-void extract_rar(const std::string& archive_path, const std::string& archive_name) {
-    ar_stream *st = ar_open_file(archive_path.c_str());
-    if (!st) { std::cerr << red("Failed to open file at " + archive_path) << std::endl; return; }
+void extract_rar(const ModFile &mod, const fs::path &store_path) {
+    ar_stream *st = ar_open_file(mod.path.c_str());
+    if (!st) { std::cerr << red("Failed to open file at " + mod.path) << std::endl; return; }
 
-    std::cout << underline("\nContents of ") + underline(bold(green(archive_path))) << std::endl;
+    std::cout << underline("\nContents of ") + underline(bold(green(mod.path))) << std::endl;
 
     ar_archive *ar = ar_open_rar_archive(st);
-    if (!ar) { std::cerr << red("Failed to open archive at " + archive_path) << std::endl; return; }
+    if (!ar) { std::cerr << red("Failed to open archive at " + mod.path) << std::endl; return; }
 
     while (ar_parse_entry(ar)) {
-        std::cout << "parsing entry" << std::endl;
         size_t size = ar_entry_get_size(ar);
         const char *name = ar_entry_get_name(ar);
         if (name) {
             std::cout << "- " << gray(name) << std::endl;
         }
 
-        // todo: bad !!!
-        std::string store_path = "/home/kofy/db/CLionProjects/UTModLoader/store";
-        std::string file_path = store_path + "/" += archive_name + "/" + name;
+        std::string file_path = store_path.string() + "/" += mod.name + "/" + name;
 
         while (size > 0) {
             const auto contents = new char[size];
@@ -41,7 +37,7 @@ void extract_rar(const std::string& archive_path, const std::string& archive_nam
             file_out.close();
 
             delete[] contents;
-            size -= size;
+            size = 0;
         }
 
         if (size > 0) {

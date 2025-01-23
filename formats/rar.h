@@ -1,8 +1,11 @@
 #ifndef RAR_H
 #define RAR_H
 
-#include <string>
+#include <filesystem>
+#include "../modfile.h"
 
-void extract_rar(const std::string& archive_path, const std::string& archive_name);
+namespace fs = std::filesystem;
+
+void extract_rar(const ModFile &mod, const fs::path &store_path);
 
 #endif // RAR_H

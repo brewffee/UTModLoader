@@ -1,8 +1,11 @@
 #ifndef ZIP_H
 #define ZIP_H
 
-#include <string>
+#include <filesystem>
+#include "../modfile.h"
 
-void extract_zip(const std::string& archive_path, const std::string& archive_name);
+namespace fs = std::filesystem;
+
+void extract_zip(const ModFile &mod, const fs::path &store_path);
 
 #endif // ZIP_H

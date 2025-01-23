@@ -1,12 +1,13 @@
 #include "umod.h"
+#include "../format.h"
 
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
-namespace fs = std::filesystem;
+using namespace format;
 
-bool readUMODHeader(const std::string& filename, UMODHeader& header) {
+bool parse_umod_header(const std::string& filename, UMODHeader& header) {
     std::ifstream file(filename, std::ios::binary);
     if (!file || !file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -33,7 +34,7 @@ bool readUMODHeader(const std::string& filename, UMODHeader& header) {
     return true;
 }
 
-int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header) {
+int parse_umod_file_directory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header) {
     std::ifstream file(filename, std::ios::binary);
     if (!file || !file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -75,36 +76,33 @@ int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dir, c
     return true;
 }
 
-int extractUMODFile(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name) {
-    std::ifstream file(filename, std::ios::binary);
+int extract_umod_entry(const ModFile &mod, const UMODFileRecord &record, const fs::path &store_path) {
+    std::ifstream file(mod.path, std::ios::binary);
     if (!file || !file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        std::cerr << "Error opening file: " << mod.path << std::endl;
         return false;
     }
 
     if (file.is_open()) {
-        // Convert the contents to a string
         char contents[record.file_size];
         file.seekg(record.file_offset);
         file.read(contents, record.file_size);
         file.close();
 
         std::string contents_str(contents, record.file_size);
+        fs::path mod_path = store_path.string() + "/" += mod.name;
 
-        // todo: dont hardcode path
-        std::string store_path = "/home/kofy/db/CLionProjects/UTModLoader/store/" + mod_name;
-        if (!std::filesystem::exists(store_path)) {
-            std::filesystem::path path(store_path);
-            create_directories(path.parent_path());
+        if (!exists(mod_path)) {
+            create_directories(mod_path.parent_path());
         }
 
         // If we're on UNIX, \ needs to be translated to /
-        std::string file_path = store_path + "/" + record.filename;
-        if constexpr (__linux__ || __linux) { // idk the diff between the two yet
+        std::string file_path = mod_path.string() + "/" + record.filename;
+        if constexpr (__linux__) {
             std::replace(file_path.begin(), file_path.end(), '\\', '/');
         }
 
-        std::filesystem::path path(file_path);
+        fs::path path(file_path);
         create_directories(path.parent_path());
 
         std::ofstream out(file_path, std::ios::out | std::ios::binary);
@@ -115,4 +113,38 @@ int extractUMODFile(const std::string &filename, const UMODFileRecord &record, c
     file.close();
 
     return true;
+}
+
+void extract_umod(const ModFile &mod, const fs::path &store_path) {
+    UMODHeader header{};
+    if (parse_umod_header(mod.path, header)) {
+        std::cout << underline(bold("UMOD Header Information for ")) << underline(bold(green(mod.name))) << std::endl;
+        std::cout << "Magic Number: " << std::hex << header.magic_number << std::dec << std::endl;
+        std::cout << "Directory Offset: " << header.dir_offset << std::endl;
+        std::cout << "Total Size: " << header.size << std::endl;
+        std::cout << "Version: " << header.version << std::endl;
+        std::cout << "CRC32: " << header.crc32 << std::endl << std::endl;
+    } // todo: error
+
+    if (UMODFileDirectory dir{}; parse_umod_file_directory(mod.path, dir, header)) {
+        std::cout << underline(bold("UMOD File Directory for ")) << underline(bold(green(mod.name))) << std::endl;
+
+        for (const auto &[name, offset, size, flags]: dir.records) {
+            std::cout << "- "
+                << std::setw(40) << std::left << name
+                << std::setw(50) << std::left <<
+                " (offset: " + yellow(std::to_string(offset)) + ", size: "+ yellow(std::to_string(size)) + ")"
+                << std::setw(32) << green(" 0x" + std::to_string(flags))
+                << std::endl;
+        }
+        std::cout << std::endl;
+
+        for (const auto &record: dir.records) {
+            std::cout<< yellow("Extracting file ") << record.filename << std::endl;
+            if (!extract_umod_entry(mod, record, store_path)) {
+                std::cerr << "Error reading file: " << mod.path << std::endl;
+            }
+        }
+        std::cout << std::endl;
+    }
 }

@@ -12,6 +12,7 @@ set(SOURCES
     formats/umod.h
     formats/rar.h
     formats/rar.cpp
+    modfile.h
 )
 
 # Dependencies

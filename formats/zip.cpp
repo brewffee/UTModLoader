@@ -6,14 +6,13 @@
 #include <iostream>
 #include <zip.h>
 
-namespace fs = std::filesystem;
 using namespace format;
 
-void extract_zip(const std::string& archive_path, const std::string& archive_name) {
-    zip_t *archive = zip_open(archive_path.c_str(), 0, nullptr);
-    if (!archive) { std::cerr << red("Failed to open archive at " + archive_path) << std::endl; return; }
+void extract_zip(const ModFile &mod, const fs::path &store_path) {
+    zip_t *archive = zip_open(mod.path.c_str(), 0, nullptr);
+    if (!archive) { std::cerr << red("Failed to open archive at " + mod.path) << std::endl; return; }
 
-    std::cout << underline("\nContents of ") + underline(bold(green(archive_path))) << std::endl;
+    std::cout << underline("\nContents of ") + underline(bold(green(mod.path))) << std::endl;
 
     const zip_int64_t num_entries = zip_get_num_entries(archive, 0);
 
@@ -24,9 +23,7 @@ void extract_zip(const std::string& archive_path, const std::string& archive_nam
         if (zip_stat_index(archive, i, 0, &st) == 0) {
             std::cout << "- " << gray(st.name) << std::endl;
 
-            // todo: dont hardcode blah blah
-            std::string store_path = "/home/kofy/db/CLionProjects/UTModLoader/store";
-            std::string file_path = store_path + "/" += archive_name + "/" + st.name;
+            std::string file_path = store_path.string() + "/" += mod.name + "/" + st.name;
 
             auto contents = new char[st.size];
             zip_file *file = zip_fopen_index(archive, i, 0);

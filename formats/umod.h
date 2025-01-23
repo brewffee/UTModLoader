@@ -1,11 +1,14 @@
 #ifndef UMOD_H
 #define UMOD_H
 
-// todo: fix inconsistent naming
-
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
+
+#include "../modfile.h"
+
+namespace fs = std::filesystem;
 
 // Test for reading UMOD files, a custom file format by Unreal Engine
 //
@@ -27,7 +30,7 @@ struct UMODHeader {
 };
 
 // Parses the header of a UMOD file
-bool readUMODHeader(const std::string& filename, UMODHeader& header);
+bool parse_umod_header(const std::string& filename, UMODHeader& header);
 
 // The file directory describes the files stored in the first part of the UMOD file.
 // Its byte offset in the UMOD file is given in the file "header" (see above).
@@ -70,9 +73,11 @@ inline std::vector<std::string> root_paths = {
 
 // Reads and prints the file directory. Note that there are no definite offsets as the number
 // and the length of the content of the files are variable
-int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header);
+int parse_umod_file_directory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header);
 
 // Reads and extracts the contents of a file
-int extractUMODFile(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name);
+int extract_umod_entry(const ModFile &mod, const UMODFileRecord &record, const fs::path &store_path);
 
+// Function to extract entire UMOD archive
+void extract_umod(const ModFile &mod, const fs::path &store_path);
 #endif // UMOD_H
