@@ -98,9 +98,9 @@ int extract_umod_entry(const ModFile &mod, const UMODFileRecord &record, const f
 
         // If we're on UNIX, \ needs to be translated to /
         std::string file_path = mod_path.string() + "/" + record.filename;
-        if constexpr (__linux__) {
+        #ifdef __linux__
             std::replace(file_path.begin(), file_path.end(), '\\', '/');
-        }
+        #endif
 
         fs::path path(file_path);
         create_directories(path.parent_path());

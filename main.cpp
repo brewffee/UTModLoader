@@ -4,8 +4,15 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <pwd.h>
 #include <string>
+#include <unistd.h>
 #include <vector>
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <stdlib.h>
+    #define WINDOWS
+#endif
 
 #include "format.h"
 #include "modfile.h"
@@ -27,7 +34,6 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
             ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
             mods.push_back(m);
 
-            // extract files first before assuming they are mod files
             std::cout << "Located possible mod file: " << magenta(file.path().filename().string()) << std::endl;
         }
     }
@@ -35,12 +41,39 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     return mods;
 }
 
-int main() {
-    // todo: should be invoked by the user instead of running automatically
-    const auto mods = locate_mods("/home/kofy/db/CLionProjects/UTModLoader/mods");
+int main(int argc, char* argv[]) {
+    // todo: args
+    // Usage: utmodloader [options] <command> <path>
+    // Options:
+    // -h, --help     Display this help message
+    // -v, --version  Display version information
+    // Commands:
+    // extract        Extract mod files. Accepts a directory or a single file path
 
-    // todo: use local storage folder
-    const fs::path store_path = fs::current_path().parent_path().string() + "/store";
+    // todo: should be invoked by the user instead of running automatically
+    const auto mods = locate_mods(fs::current_path().parent_path() / "mods");
+
+    char* user_dir;
+    fs::path store_path;
+
+    #ifdef __linux__
+        if ((user_dir = getenv("HOME")) == nullptr) {
+            user_dir = getpwuid(getuid()) -> pw_dir;
+        }
+
+        store_path = fs::path(user_dir) / ".local/share/UTModLoader/store";
+    #elif WINDOWS
+        // todo: i have no idea if this works yet i just read some random docs for this
+        // todo: update there is definitely a better win32 function for this
+        size_t len;
+        if (errno_t err = _dupenv_s(&user_dir, &len, "APPDATA")) {
+            std::cerr << "Failed to get APPDATA environment variable" << std::endl;
+            return 1;
+        }
+
+        store_path = std::string(user_dir) + "\\UTModLoader\\store";
+        free(user_dir);
+    #endif
 
     for (int i = 0; i < mods.size(); i++) {
         std::cout << "Extracting mod " << i + 1 << " of " << mods.size() << std::endl;
