@@ -10,12 +10,14 @@ set(SOURCES
     formats/zip.cpp
     formats/umod.cpp
     formats/umod.h
+    formats/rar.h
+    formats/rar.cpp
 )
 
 # Dependencies
 find_package(libzip REQUIRED)
 set(BUILD_LINK_LIBS
-    zip
+    zip unarr
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

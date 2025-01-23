@@ -1,22 +1,25 @@
+// todo: create test mod files for each format
+
 #include <bitset>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "format.h"
+#include "formats/rar.h"
 #include "formats/umod.h"
 #include "formats/zip.h"
 
 namespace fs = std::filesystem;
 using namespace format;
 
-// Use mapping of file extension to mod type later
 enum ModType {
-    UNKNOWN,
     UMOD,
-    ZIP
+    ZIP,
+    RAR
 };
 
 class ModFile {
@@ -26,36 +29,34 @@ class ModFile {
         mutable ModType type;
 };
 
-std::vector<ModFile> locate_mods() {
-    const std::string mods_path = "/home/kofy/db/CLionProjects/Unreal/mods"; // yea
+std::map<std::string, ModType> valid_extensions = {
+    { ".umod", UMOD },
+    { ".zip",  ZIP  },
+    { ".rar",  RAR  }
+};
 
-    // Mods can either be ZIP files or UMOD files, filter other files
-    // todo: i forgot about RAR UUUUUUUUUUGHHHGHGHGHGHHHJHHKJHFKJSHKjhjkdfksjkl;
+std::vector<ModFile> locate_mods() {
+    // todo: accept path as argument
+    const fs::path mods_path("/home/kofy/db/CLionProjects/UTModLoader/mods");
+    std::cout << "Locating mods in " << mods_path << std::endl;
+
+    // Filter out non-mod files
     std::vector<ModFile> mods;
     for (const auto &file: fs::directory_iterator(mods_path)) {
-        if (file.path().extension() == ".umod") {
-            ModFile m = { file.path().stem().string(), file.path().string(), UMOD };
+        auto ext = file.path().extension().string();
+        if (auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
+            ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
             mods.push_back(m);
-        } else if (file.path().extension() == ".zip") {
-            ModFile m = { file.path().stem().string(), file.path().string(), ZIP };
-            mods.push_back(m);
+
+            // extract files first before assuming they are mod files
+            std::cout << "Located possible mod file: " << magenta(file.path().filename().string()) << std::endl;
         }
     }
-
-    std::cout << "Located " << mods.size() << " mods!" << std::endl;
-    std::cout << "====================================================================================" << std::endl;
-    for (const auto &[name, path, type]: mods) {
-        std::cout
-        << std::setw(15) << std::left << yellow(type == UMOD ? "UMOD" : "ZIP")
-        << std::setw(36) << std::left << green(bold(name))
-        << gray(parens(path))
-        << std::endl;
-    }
-    std::cout << std::endl;
 
     return mods;
 }
 
+// todo: move to umod.cpp
 void extract_umod(const ModFile &mod) {
     UMODHeader header{};
     if (readUMODHeader(mod.path, header)) {
@@ -82,7 +83,7 @@ void extract_umod(const ModFile &mod) {
 
         for (const auto &record: dir.records) {
             std::cout<< yellow("Extracting file ") << record.filename << std::endl;
-            if (!readUMODFileContents(mod.path, record, mod.name)) {
+            if (!extractUMODFile(mod.path, record, mod.name)) {
                 std::cerr << "Error reading file: " << mod.path << std::endl;
             }
         }
@@ -92,7 +93,8 @@ void extract_umod(const ModFile &mod) {
 }
 
 int main() {
-    const auto mods = locate_mods();
+    const auto mods = locate_mods(); // todo: should be invoked by the user instead of running automatically
+    // todo: determine store path somewhere here instead of hardcoding
 
     for (int i = 0; i < mods.size(); i++) {
         std::cout << "Extracting mod " << i + 1 << " of " << mods.size() << std::endl;
@@ -102,7 +104,11 @@ int main() {
                 extract_umod(mods[i]);
                 break;
             case ZIP:
-                extract_archive(mods[i].path, mods[i].name);
+                // todo: pass ModFile instance instead of accessing properties directly
+                extract_zip(mods[i].path, mods[i].name);
+                break;
+            case RAR:
+                extract_rar(mods[i].path, mods[i].name);
                 break;
             default:
                 std::cerr << "Unknown mod type for mod " << mods[i].name << std::endl;
@@ -110,7 +116,11 @@ int main() {
         }
     }
 
+    // todo: sometimes ZIP or RAR files could contain a UMOD file hidden inside , check for this after extraction
+    // todo: store mod information in local file
     std::cout << blue("Done!") << std::endl;
+
+
 
     return 0;
 }
