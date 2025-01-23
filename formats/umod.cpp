@@ -75,7 +75,7 @@ int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dir, c
     return true;
 }
 
-int readUMODFileContents(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name) {
+int extractUMODFile(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name) {
     std::ifstream file(filename, std::ios::binary);
     if (!file || !file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -92,7 +92,7 @@ int readUMODFileContents(const std::string &filename, const UMODFileRecord &reco
         std::string contents_str(contents, record.file_size);
 
         // todo: dont hardcode path
-        std::string store_path = "/home/kofy/db/CLionProjects/Unreal/store/" + mod_name;
+        std::string store_path = "/home/kofy/db/CLionProjects/UTModLoader/store/" + mod_name;
         if (!std::filesystem::exists(store_path)) {
             std::filesystem::path path(store_path);
             create_directories(path.parent_path());

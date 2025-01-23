@@ -9,7 +9,7 @@
 namespace fs = std::filesystem;
 using namespace format;
 
-void extract_archive(const std::string& archive_path, const std::string& archive_name) {
+void extract_zip(const std::string& archive_path, const std::string& archive_name) {
     zip_t *archive = zip_open(archive_path.c_str(), 0, nullptr);
     if (!archive) { std::cerr << red("Failed to open archive at " + archive_path) << std::endl; return; }
 
@@ -25,7 +25,7 @@ void extract_archive(const std::string& archive_path, const std::string& archive
             std::cout << "- " << gray(st.name) << std::endl;
 
             // todo: dont hardcode blah blah
-            std::string store_path = "/home/kofy/db/CLionProjects/Unreal/store";
+            std::string store_path = "/home/kofy/db/CLionProjects/UTModLoader/store";
             std::string file_path = store_path + "/" += archive_name + "/" + st.name;
 
             auto contents = new char[st.size];

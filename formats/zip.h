@@ -3,6 +3,6 @@
 
 #include <string>
 
-void extract_archive(const std::string& archive_path, const std::string& archive_name);
+void extract_zip(const std::string& archive_path, const std::string& archive_name);
 
 #endif // ZIP_H

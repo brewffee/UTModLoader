@@ -1,12 +1,14 @@
 #ifndef UMOD_H
 #define UMOD_H
 
+// todo: fix inconsistent naming
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
 // Test for reading UMOD files, a custom file format by Unreal Engine
-
+//
 // The UMOD file "header" is 20 bytes long. The header is stored in the last 20 bytes of
 // the file (hence the quotes around the term "header")
 //
@@ -68,9 +70,9 @@ inline std::vector<std::string> root_paths = {
 
 // Reads and prints the file directory. Note that there are no definite offsets as the number
 // and the length of the content of the files are variable
-int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dict, const UMODHeader &header);
+int readUMODFileDirectory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header);
 
 // Reads and extracts the contents of a file
-int readUMODFileContents(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name);
+int extractUMODFile(const std::string &filename, const UMODFileRecord &record, const std::string &mod_name);
 
 #endif // UMOD_H
