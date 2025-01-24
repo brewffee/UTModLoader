@@ -90,20 +90,19 @@ int extract_umod_entry(const ModFile &mod, const UMODFileRecord &record, const f
         file.close();
 
         std::string contents_str(contents, record.file_size);
-        fs::path mod_path = store_path.string() + "/" += mod.name;
+        fs::path mod_path = store_path / mod.name;
 
         if (!exists(mod_path)) {
             create_directories(mod_path.parent_path());
         }
 
         // If we're on UNIX, \ needs to be translated to /
-        std::string file_path = mod_path.string() + "/" + record.filename;
+        fs::path file_path = mod_path / record.filename;
         #ifdef __linux__
-            std::replace(file_path.begin(), file_path.end(), '\\', '/');
+            std::replace(file_path.string().begin(), file_path.string().end(), '\\', '/');
         #endif
 
-        fs::path path(file_path);
-        create_directories(path.parent_path());
+        create_directories(file_path.parent_path());
 
         std::ofstream out(file_path, std::ios::out | std::ios::binary);
         out << contents_str;

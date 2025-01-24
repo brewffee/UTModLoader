@@ -23,7 +23,7 @@ void extract_zip(const ModFile &mod, const fs::path &store_path) {
         if (zip_stat_index(archive, i, 0, &st) == 0) {
             std::cout << "- " << gray(st.name) << std::endl;
 
-            std::string file_path = store_path.string() + "/" += mod.name + "/" + st.name;
+            fs::path file_path = store_path / mod.name / st.name;
 
             auto contents = new char[st.size];
             zip_file *file = zip_fopen_index(archive, i, 0);

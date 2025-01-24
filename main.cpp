@@ -31,7 +31,7 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     for (const auto &file: fs::directory_iterator(mods_path)) {
         auto ext = file.path().extension().string();
         if (auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
-            ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
+            ModFile m = { file.path().stem(), file.path(), i -> second };
             mods.push_back(m);
 
             std::cout << "Located possible mod file: " << magenta(file.path().filename().string()) << std::endl;
@@ -87,9 +87,6 @@ int main(int argc, char* argv[]) {
                 break;
             case RAR:
                 extract_rar(mods[i], store_path);
-                break;
-            default:
-                std::cerr << "Unknown mod type for mod " << mods[i].name << std::endl;
                 break;
         }
     }

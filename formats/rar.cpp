@@ -24,13 +24,13 @@ void extract_rar(const ModFile &mod, const fs::path &store_path) {
             std::cout << "- " << gray(name) << std::endl;
         }
 
-        std::string file_path = store_path.string() + "/" += mod.name + "/" + name;
+        fs::path file_path = store_path / mod.name / name;
 
         while (size > 0) {
             const auto contents = new char[size];
             if (!ar_entry_uncompress(ar, contents, size)) break;
 
-            create_directories(fs::path(file_path).parent_path());
+            create_directories(file_path.parent_path());
 
             std::ofstream file_out(file_path, std::ios::out | std::ios::binary);
             file_out.write(contents, static_cast<std::streamsize>(size));
