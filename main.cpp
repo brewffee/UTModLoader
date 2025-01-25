@@ -4,14 +4,14 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <pwd.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
 
-#if defined(_WIN32) || defined(_WIN64)
-    #include <stdlib.h>
-    #define WINDOWS
+#if _WIN32
+    #include <shlobj.h>
+#elif __linux__
+    #include <pwd.h>
 #endif
 
 #include "format.h"
@@ -31,7 +31,7 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     for (const auto &file: fs::directory_iterator(mods_path)) {
         auto ext = file.path().extension().string();
         if (auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
-            ModFile m = { file.path().stem(), file.path(), i -> second };
+            ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
             mods.push_back(m);
 
             std::cout << "Located possible mod file: " << magenta(file.path().filename().string()) << std::endl;
@@ -53,27 +53,33 @@ int main(int argc, char* argv[]) {
     // todo: should be invoked by the user instead of running automatically
     const auto mods = locate_mods(fs::current_path().parent_path() / "mods");
 
-    char* user_dir;
     fs::path store_path;
 
     #ifdef __linux__
+        char* user_dir;
         if ((user_dir = getenv("HOME")) == nullptr) {
             user_dir = getpwuid(getuid()) -> pw_dir;
         }
 
-        store_path = fs::path(user_dir) / ".local/share/UTModLoader/store";
-    #elif WINDOWS
-        // todo: i have no idea if this works yet i just read some random docs for this
-        // todo: update there is definitely a better win32 function for this
-        size_t len;
-        if (errno_t err = _dupenv_s(&user_dir, &len, "APPDATA")) {
-            std::cerr << "Failed to get APPDATA environment variable" << std::endl;
+        if (user_dir == nullptr) {
+            std::cerr << "Failed to get user directory" << std::endl;
             return 1;
         }
 
-        store_path = std::string(user_dir) + "\\UTModLoader\\store";
-        free(user_dir);
+        store_path = fs::path(user_dir) / ".local/share/UTModLoader/store";
+    #elifdef _WIN32
+        PWSTR udir;
+        if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &udir) != S_OK) {
+            std::cerr << "Failed to get user directory" << std::endl;
+            CoTaskMemFree(udir);
+            return 1;
+        }
+
+        store_path = fs::path(udir) / "UTModLoader\\store";
+        CoTaskMemFree(udir);
     #endif
+
+    std::cout << "Store path: " << store_path << std::endl;
 
     for (int i = 0; i < mods.size(); i++) {
         std::cout << "Extracting mod " << i + 1 << " of " << mods.size() << std::endl;
