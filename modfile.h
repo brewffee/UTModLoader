@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-enum ModType {
+enum ModType: uint8_t {
     UMOD,
     ZIP,
     RAR
@@ -16,7 +16,7 @@ struct ModFile {
     ModType type;
 };
 
-inline std::map<std::string, ModType> valid_extensions = {
+inline const std::map<std::string, ModType> valid_extensions = {
     { ".umod", UMOD },
     { ".zip",  ZIP  },
     { ".rar",  RAR  }

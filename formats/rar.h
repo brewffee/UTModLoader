@@ -4,8 +4,14 @@
 #include <filesystem>
 #include "../modfile.h"
 
-namespace fs = std::filesystem;
-
-void extract_rar(const ModFile &mod, const fs::path &store_path);
+/**
+ * Extracts the contents of a RAR archive to a specified directory.
+ *
+ * @param mod The ModFile object containing the RAR archive to extract.
+ * @param store_path The directory where the extracted files will be stored.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int extract_rar(const ModFile &mod, const std::filesystem::path &store_path);
 
 #endif // RAR_H

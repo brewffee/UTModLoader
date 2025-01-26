@@ -1,50 +1,62 @@
-#include "rar.h"
-#include "../format.h"
-
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <unarr.h>
+#include <vector>
 
-using namespace format;
+#include "rar.h"
+#include "../format.h"
+#include "../macros.h"
 
-void extract_rar(const ModFile &mod, const fs::path &store_path) {
+// todo: check if this rar is secretly just a container for a umod file
+
+namespace fs = std::filesystem;
+using str = std::string;
+
+int extract_rar(const ModFile &mod, const fs::path &store_path) {
+    const std::string prefix = gray("[RAR] ") + blue("["+mod.name +"]");
+    std::cout << prefix << " Reading file " << underline(mod.path) << std::endl;
+
+    // Attempt to open the archive
     ar_stream *st = ar_open_file(mod.path.c_str());
-    if (!st) { std::cerr << red("Failed to open file at " + mod.path) << std::endl; return; }
+    FAIL_IF(!st, "Failed to open archive at " + mod.path);
 
-    std::cout << underline("\nContents of ") + underline(bold(green(mod.path))) << std::endl;
-
+    // Verify stream data and access archive
     ar_archive *ar = ar_open_rar_archive(st);
-    if (!ar) { std::cerr << red("Failed to open archive at " + mod.path) << std::endl; return; }
+    FAIL_IF(!ar, "Could not read archive data for file " + mod.path);
 
+    // Loop over the file entries
     while (ar_parse_entry(ar)) {
         size_t size = ar_entry_get_size(ar);
         const char *name = ar_entry_get_name(ar);
-        if (name) {
-            std::cout << "- " << gray(name) << std::endl;
-        }
+        FAIL_IF(name == nullptr, "Failed to read file name in archive: " + mod.path);
 
-        fs::path file_path = store_path / mod.name / name;
-
+        // Read the current entry's data
         while (size > 0) {
-            const auto contents = new char[size];
-            if (!ar_entry_uncompress(ar, contents, size)) break;
+            std::cout << prefix << " Extracting " << green(name) << std::endl;
 
-            create_directories(file_path.parent_path());
+            // Read the contents of the file and store them into our buffer
+            std::vector<char> contents(size);
+            const bool ustatus = ar_entry_uncompress(ar, contents.data(), size);
+            FAIL_IF(!ustatus, "Failed to decompress file: " + str(name));
 
+            const fs::path file_path = store_path / mod.name / name;
+            FAIL_EC(create_directories(file_path.parent_path(), EC), "Error creating paths for " + file_path.string());
+
+            // Write the extracted contents to file
             std::ofstream file_out(file_path, std::ios::out | std::ios::binary);
-            file_out.write(contents, static_cast<std::streamsize>(size));
+            FAIL_IF(!file_out.is_open(), "Failed to open file for writing: " + file_path.string());
+
+            file_out.write(contents.data(), static_cast<std::streamsize>(size));
+            FAIL_IF(file_out.fail(), "Failed to write to file " + file_path.string());
+
             file_out.close();
+            FAIL_IF(file_out.fail(), "Failed to close file " + file_path.string());
 
-            delete[] contents;
             size = 0;
-        }
-
-        if (size > 0) {
-            std::cerr << "Failed to decompress file: " << name << std::endl;
         }
     }
 
     ar_close_archive(ar);
     ar_close(st);
+    return 0;
 }

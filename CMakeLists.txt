@@ -13,6 +13,7 @@ set(SOURCES
     formats/rar.h
     formats/rar.cpp
     modfile.h
+    macros.h
 )
 
 # Dependencies

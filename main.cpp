@@ -21,7 +21,7 @@
 #include "formats/zip.h"
 
 namespace fs = std::filesystem;
-using namespace format;
+using str = std::string;
 
 std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     std::cout << "Locating mods in " << mods_path << std::endl;
@@ -31,7 +31,7 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     for (const auto &file: fs::directory_iterator(mods_path)) {
         auto ext = file.path().extension().string();
         if (auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
-            ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
+            const ModFile m = { file.path().stem().string(), file.path().string(), i -> second };
             mods.push_back(m);
 
             std::cout << "Located possible mod file: " << magenta(file.path().filename().string()) << std::endl;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     fs::path store_path;
 
     #ifdef __linux__
-        char* user_dir;
+        char* user_dir = nullptr;
         if ((user_dir = getenv("HOME")) == nullptr) {
             user_dir = getpwuid(getuid()) -> pw_dir;
         }
@@ -82,8 +82,11 @@ int main(int argc, char* argv[]) {
     std::cout << "Store path: " << store_path << std::endl;
 
     for (int i = 0; i < mods.size(); i++) {
-        std::cout << "Extracting mod " << i + 1 << " of " << mods.size() << std::endl;
+        std::cout << "Extracting " << mods[i].name << gray(
+            "... (" + std::to_string(i + 1) + " of " + std::to_string(mods.size()) + ")"
+        ) << std::endl;
 
+        // todo: use returned value
         switch (mods[i].type) {
             case UMOD:
                 extract_umod(mods[i], store_path);
@@ -99,8 +102,7 @@ int main(int argc, char* argv[]) {
 
     // todo: sometimes ZIP or RAR files could contain a UMOD file hidden inside , check for this after extraction
     // todo: store mod information in local file
-    // todo: redo all logging
     std::cout << blue("Done!") << std::endl;
 
-    return 0;
+    return EXIT_SUCCESS;
 }
