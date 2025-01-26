@@ -1,5 +1,6 @@
 // todo: create test mod files for each format
 
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -14,7 +15,9 @@
     #include <pwd.h>
 #endif
 
+#include "config.h"
 #include "format.h"
+#include "macros.h"
 #include "modfile.h"
 #include "formats/rar.h"
 #include "formats/umod.h"
@@ -41,18 +44,12 @@ std::vector<ModFile> locate_mods(const fs::path &mods_path) {
     return mods;
 }
 
-int main(int argc, char* argv[]) {
-    // todo: args
-    // Usage: utmodloader [options] <command> <path>
-    // Options:
-    // -h, --help     Display this help message
-    // -v, --version  Display version information
-    // Commands:
-    // extract        Extract mod files. Accepts a directory or a single file path
+int extract_mods(const std::string &search_path) {
+    // Verify the given path exists
+    const fs::path mods_path = fs::canonical(search_path);
+    FAIL_IF(!exists(mods_path), "Directory does not exist: " + search_path);
 
-    // todo: should be invoked by the user instead of running automatically
-    const auto mods = locate_mods(fs::current_path().parent_path() / "mods");
-
+    const auto mods = locate_mods(mods_path);
     fs::path store_path;
 
     #ifdef __linux__
@@ -100,9 +97,52 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // todo: sometimes ZIP or RAR files could contain a UMOD file hidden inside , check for this after extraction
     // todo: store mod information in local file
     std::cout << blue("Done!") << std::endl;
+
+    return 0;
+}
+
+int main(const int argc, char* argv[]) {
+    const std::string usage_str = "Usage: utmodloader [options] <command> <path>\n"
+        "Options:\n"
+        "\t-h, --help       Display this help message\n"
+        "\t-v, --version    Display version information\n"
+        "Commands:\n"
+        "\textract          Extract mod files. Accepts a directory or a single file path";
+
+    if (argc < 2) {
+        std::cout << usage_str << std::endl;
+        return 1;
+    }
+
+    const std::vector<std::string> args(argv, argv + argc);
+
+    // todo: there's a better way to do this
+    for (int i = 1; i < args.size(); i++) {
+        const std::string &arg = args[i];
+
+        if (arg == "-h" || arg == "--help") {
+            std::cout << usage_str << std::endl;
+            return 0;
+        }
+
+        if (arg == "-v" || arg == "--version") {
+            std::cout << "UTModLoader v" << PROJECT_VERSION << std::endl;
+            return 0;
+        }
+
+        // Commands
+        if (arg == "extract") {
+            if (i + 1 < args.size()) {
+                extract_mods(args[i + 1]);
+                break;
+            }
+
+            std::cerr << "No path specified" << std::endl;
+            return 1;
+        }
+    }
 
     return EXIT_SUCCESS;
 }

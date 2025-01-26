@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 23)
 
 # Project information
-project(Unreal)
+project(UTModLoader VERSION 0.0.0 LANGUAGES CXX)
 set(SOURCES
     main.cpp
     format.h
@@ -15,6 +15,9 @@ set(SOURCES
     modfile.h
     macros.h
 )
+
+configure_file(config.h.in config.h)
+include_directories(${PROJECT_BINARY_DIR})
 
 # Dependencies
 find_package(libzip REQUIRED)
