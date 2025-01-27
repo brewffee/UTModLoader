@@ -1,5 +1,4 @@
 #include "extract.h"
-#include "../format.h"
 #include "../util.h"
 #include "../formats/rar.h"
 #include "../formats/umod.h"

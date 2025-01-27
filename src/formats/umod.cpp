@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "umod.h"
-#include "../format.h"
 #include "../util.h"
 
 namespace fs = std::filesystem;
