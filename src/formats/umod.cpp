@@ -126,19 +126,19 @@ int parse_umod_file_directory(const std::string &filename, UMODFileDirectory &di
 
 int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::path &store_path) {
     std::ifstream file(mod.path, std::ios::binary);
-    FAIL_IF(!file || !file.is_open(), "Error opening file while extracting: " + mod.path);
+    FAIL_IF(!file || !file.is_open(), "Error opening file while extracting: " + mod.path.string());
 
     if (file.is_open()) {
         // Read the contents of the file
         std::vector<char> contents(record.file_size);
         file.seekg(record.file_offset);
-        FAIL_IF(file.fail(), "Error seeking to file offset for file " + record.filename + " in UMOD: " + mod.path);
+        FAIL_IF(file.fail(), "Error seeking to file offset for file " + record.filename + " in UMOD: " + mod.path.string());
 
         file.read(contents.data(), record.file_size);
-        FAIL_IF(file.fail(), "Error reading file contents for file " + record.filename + " in from UMOD: " + mod.path);
+        FAIL_IF(file.fail(), "Error reading file contents for file " + record.filename + " in from UMOD: " + mod.path.string());
 
         file.close();
-        FAIL_IF(file.is_open(), "Failed to close UMOD file: " + mod.path + " while extracting: " + record.filename);
+        FAIL_IF(file.is_open(), "Failed to close UMOD: " + mod.path.string() + " while extracting: " + record.filename);
 
         // If we're on linux, translate any \ characters to /
         #ifdef __linux__
@@ -163,7 +163,7 @@ int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::pat
     }
 
     file.close();
-    FAIL_IF(file.is_open(), "Failed to close UMOD file while extracting: " + mod.path);
+    FAIL_IF(file.is_open(), "Failed to close UMOD file while extracting: " + mod.path.string());
     return 0;
 }
 
@@ -173,7 +173,7 @@ int extract_umod(const ModFile &mod, const fs::path &store_path) {
 
     // Attempt to parse the UMOD header
     UMODHeader header{};
-    FAIL_IF(parse_umod_header(mod.path, header) != 0, "Failed to parse UMOD header: " + mod.path);
+    FAIL_IF(parse_umod_header(mod.path, header) != 0, "Failed to parse UMOD header: " + mod.path.string());
 
     std::cout << prefix << "Successfully parsed UMOD header" << std::endl;
     std::cout << prefix << "Magic Number: 0x" << std::hex << header.magic_number << std::dec << std::endl;
@@ -184,7 +184,7 @@ int extract_umod(const ModFile &mod, const fs::path &store_path) {
 
     // Attempt to parse the file directory
     UMODFileDirectory dir{};
-    FAIL_IF(parse_umod_file_directory(mod.path, dir, header) != 0, "Failed to parse UMOD file directory: " + mod.path);
+    FAIL_IF(parse_umod_file_directory(mod.path, dir, header) != 0, "Failed to parse UMOD file directory: " + mod.path.string());
 
     std::cout << prefix << "Successfully parsed UMOD file directory" << gray(
         " (" + std::to_string(dir.records.size()) + " entries)"
@@ -200,7 +200,7 @@ int extract_umod(const ModFile &mod, const fs::path &store_path) {
         ")") << std::endl;
 
         const int estatus = extract_umod_entry(mod, record, store_path);
-        FAIL_WITH(estatus,  "Error extracting entry " + record.filename + " from UMOD: " + mod.path);
+        FAIL_WITH(estatus,  "Error extracting entry " + record.filename + " from UMOD: " + mod.path.string());
     }
 
     return 0; // awesome !!!!!

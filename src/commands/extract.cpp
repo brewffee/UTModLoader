@@ -20,7 +20,7 @@ ModFile get_mod_file(const fs::path &path) {
 
     if (const auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
         std::cout << "Located possible mod file: " << magenta(path.filename().string()) << std::endl;
-        return ModFile { path.stem().string(), path.string(), i -> second, true };
+        return ModFile { path.stem().string(), path, i -> second, true };
     }
 
     return ModFile{};
@@ -49,7 +49,7 @@ std::vector<ModFile> locate_mods(const fs::path &path) {
 
 int extract_mods(const std::string &search_path) {
     // Verify the given path exists
-    const fs::path mods_path = fs::canonical(search_path);
+    const fs::path mods_path = fs::weakly_canonical(search_path);
     FAIL_IF(!exists(mods_path), "Directory does not exist: " + search_path);
 
     const auto mods = locate_mods(mods_path);

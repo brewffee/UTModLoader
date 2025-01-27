@@ -10,10 +10,9 @@ enum ModType: uint8_t {
     RAR
 };
 
-// todo: modfile.path can probably survive being an fs::path obj
 struct ModFile {
     std::string name;
-    std::string path;
+    std::filesystem::path path;
     ModType type;
     bool ok = false;
 };
