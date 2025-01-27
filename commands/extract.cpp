@@ -35,7 +35,6 @@ std::vector<ModFile> locate_mods(const fs::path &path) {
         for (const auto &file: fs::directory_iterator(path)) {
             if (const ModFile m = get_mod_file(file); m.ok) {
                 mods.push_back(m);
-                std::cout << "Located possible mod file " << magenta(path.filename().string()) << std::endl;
             }
         }
     } else if (is_regular_file(path)) {
