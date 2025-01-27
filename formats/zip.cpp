@@ -5,7 +5,7 @@
 
 #include "zip.h"
 #include "../format.h"
-#include "../macros.h"
+#include "../util.h"
 
 // todo: check if this zip is secretly just a container for a umod file
 

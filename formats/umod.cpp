@@ -3,12 +3,11 @@
 
 #include "umod.h"
 #include "../format.h"
-#include "../macros.h"
+#include "../util.h"
 
 namespace fs = std::filesystem;
 using str = std::string;
 
-// todo: modfile.path can probably survive being an fs::path obj
 int parse_umod_header(const std::string& filename, UMODHeader& header) {
     std::ifstream file(filename, std::ios::binary);
     FAIL_IF(!file || !file.is_open(), "Error opening file while reading header: " + filename);

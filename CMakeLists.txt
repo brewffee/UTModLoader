@@ -5,15 +5,17 @@ set(CMAKE_CXX_STANDARD 23)
 project(UTModLoader VERSION 0.0.0 LANGUAGES CXX)
 set(SOURCES
     main.cpp
+    util.h
     format.h
+    modfile.h
     formats/zip.h
     formats/zip.cpp
     formats/umod.cpp
     formats/umod.h
     formats/rar.h
     formats/rar.cpp
-    modfile.h
-    macros.h
+    commands/extract.cpp
+    commands/extract.h
 )
 
 configure_file(config.h.in config.h)

@@ -5,7 +5,7 @@
 
 #include "rar.h"
 #include "../format.h"
-#include "../macros.h"
+#include "../util.h"
 
 // todo: check if this rar is secretly just a container for a umod file
 

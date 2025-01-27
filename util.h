@@ -1,5 +1,5 @@
-#ifndef MACROS_H
-#define MACROS_H
+#ifndef UTIL_H
+#define UTIL_H
 
 // Returns EXIT_FAILURE if expr is true
 #define FAIL_IF(expr, msg) if (expr) { std::cerr << msg << std::endl; return EXIT_FAILURE; }
@@ -8,7 +8,21 @@
 #define FAIL_WITH(expr, msg) if (const auto code = expr; code) { std::cerr << msg << std::endl; return code; }
 
 // Returns an std::error_code value and prints its message if expr is true
+// Defines a local variable EC to pass as an argument
 #define FAIL_EC(expr, msg) \
 std::error_code EC; if (expr; EC) { std::cerr << msg <<"\n" << EC.message() << std::endl; return EC.value(); }
 
-#endif // MACROS_H
+/**
+ * Checks if a item exists in a container
+ *
+ * @param c The container to check
+ * @param t The item to search for
+ *
+ * @return true if the item exists, false otherwise
+ */
+template<class C, typename T>
+static bool find_in(C &c, T t) {
+    return std::find(std::begin(c), std::end(c), t) != std::end(c);
+}
+
+#endif // UTIL_H
