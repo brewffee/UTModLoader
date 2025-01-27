@@ -148,7 +148,7 @@ int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::pat
         // Create the mod's directory if it doesn't exist yet
         const fs::path file_path = store_path / mod.name / record.filename;
         if (!exists(file_path.parent_path())) {
-            FAIL_EC(create_directories(file_path.parent_path(), EC), "Error creating paths for " + str(file_path));
+            FAIL_EC(create_directories(file_path.parent_path(), EC), "Error creating paths for " + file_path.string());
         }
 
         // Write the extracted contents to file
