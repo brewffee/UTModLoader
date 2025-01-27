@@ -47,7 +47,7 @@ target_link_libraries(${PROJECT_NAME} ${BUILD_LINK_LIBS})
 if (WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_PREFIX_PATH})
 
-    add_custom_command(TARGET Unreal PRE_BUILD
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "${MSYS_PFX}/bin/libunarr.dll" "${CMAKE_BINARY_DIR}/libunarr.dll"
     )
 endif()
