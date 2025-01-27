@@ -84,7 +84,7 @@ int extract_mods(const std::string &search_path) {
 
     int error{};
     for (int i = 0; i < mods.size(); i++) {
-        std::cout << "Extracting " << mods[i].name << "..." <<
+        std::cout << "Extracting " << mods[i].name << "... " <<
             gray("(" + std::to_string(i + 1) + " of " + std::to_string(mods.size()) + ")")
         << std::endl;
 

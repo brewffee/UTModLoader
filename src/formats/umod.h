@@ -8,6 +8,30 @@
 
 #include "../modfile.h"
 
+// Index values are signed integers stored in a compact format, occupying one to five bytes. In the first byte,
+//  - the most significant bit (bit 7) specifies the sign of the integer value;
+//  - the second-most significant bit (bit 6) is set if the value is continued in the next byte;
+//  - and the six remaining bits (bits 5 to 0) are the six least significant bits of the resultant integer value.
+//
+// Each of the three following bytes (if applicable according to bit 6 of the first byte) contributes seven more
+// bits to the final integer value (bits 6 to 0 of each byte), while its most significant bit (bit 7) is set if
+// another byte must be read to continue the value. The fifth byte contributes full eight bits to the value. No more
+// than five bytes are read for a compact index value.
+struct Index {
+    int value{};
+    int prev_bit_len = 0;   // The amount of bits to shift this index by
+    bool ok = false;        // Whether or not the the index is completely finished reading
+};
+
+/**
+ * Reads a single byte, assuming it's part of an index integer
+ *
+ * @param c The byte to read
+ * @param i Iterator, used to determine which byte is being read
+ * @param index The index object to fill
+ */
+void read_index_byte(char c, int i, Index &index);
+
 // The UMOD file "header" is 20 bytes long. The header is stored in the last 20 bytes of
 // the file (hence the quotes around the term "header")
 //
@@ -31,10 +55,11 @@ constexpr uint32_t MAGIC_NUMBER = 0x9FE3C5A3;
 // The file flags should be 0x3 for Manifest.ini and Manifest.int to prevent those files from being
 // copied to the user's System directory, and set to 0x0 for all other files
 struct UMODFileRecord {
-    std::string filename;
-    uint32_t file_offset = 0;
-    uint32_t file_size = 0;
-    uint32_t file_flags = 0;
+    Index filename_length;      // Length in bytes of the filename
+    std::string filename;       // The name of the file
+    uint32_t file_offset = 0;   // Byte offset of the file
+    uint32_t file_size = 0;     // Total byte size of the file
+    uint32_t file_flags = 0;    // Installation flags
 };
 
 // The file directory describes the files stored in the first part of the UMOD file.
@@ -47,13 +72,6 @@ struct UMODFileDirectory {
 enum UMODInstallationFlags: uint8_t {
     NoCopy = 0x3, // Don't copy this file to the user's System directory
     None = 0x0  // Default
-};
-
-// List of root paths in the UMOD file
-inline const std::vector<std::string> root_paths = {
-    "System", "System64", "SystemLocalized", "Help",
-    "Manual", "Maps", "Music", "Patches", "Sounds",
-    "Textures", "Web"
 };
 
 /**

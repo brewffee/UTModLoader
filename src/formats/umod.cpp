@@ -1,3 +1,4 @@
+#include <bitset>
 #include <fstream>
 #include <iostream>
 
@@ -6,6 +7,45 @@
 
 namespace fs = std::filesystem;
 using str = std::string;
+
+void read_index_byte(const char c, const int i, Index &index) {
+    if (index.ok) return; // Why are you running this function a second time?
+
+    int sign = -1; // Positive default (we multiply by -1 at the end)
+    constexpr int FIRST_BIT_LEN = 6;
+    constexpr int MIDDLE_BIT_LEN = 7;
+    index.prev_bit_len = FIRST_BIT_LEN;
+
+    // First byte
+    if (i == 0) {
+        sign = c & 0x80; /* X0000000 */
+        index.value = c & 0x3F; /* 00XXXXXX */
+
+        if ((c & 0x40) == 0) { /* 0X000000 */
+            if (sign) index.value *= -1;
+            index.ok = true;
+        }
+    }
+
+    // Final byte
+    else if (i == 4) {
+        index.value |= (c & 0x80) << index.prev_bit_len; /* X0000000 */
+
+        index.value *= -sign;
+        index.ok = true;
+    }
+
+    // Middle bytes
+    else {
+        index.value |= (c & 0x7F) << index.prev_bit_len; /* 0XXXXXXX */
+        index.prev_bit_len += MIDDLE_BIT_LEN;
+
+        if ((c & 0x80) == 0) { /* X0000000 */
+            index.value *= -sign;
+            index.ok = true;
+        }
+    }
+}
 
 int parse_umod_header(const std::string& filename, UMODHeader& header) {
     std::ifstream file(filename, std::ios::binary);
@@ -30,37 +70,43 @@ int parse_umod_file_directory(const std::string &filename, UMODFileDirectory &di
     file.seekg(header.dir_offset);
     FAIL_IF(!file.good(), "Error seeking to file directory in file: " + filename);
 
+    int pass = 0;
     while (file.good() && file.tellg() < header.size - HEADER_SIZE) {
-        UMODFileRecord record;
+        UMODFileRecord record{};
 
-        // The first null byte occurs after the length of the file name. We don't need to read it,
-        // as the filename's length can be programmatically determined afterwards.
-        // This is definitely not best practice, but it isn't broken ((yet)), so we shan't fix it.
-        std::vector<char> entry_name_buf;
-        char c{};
-        while (file.get(c) && c != '\0') {
-            entry_name_buf.push_back(c);
-        }
-        FAIL_IF(entry_name_buf.empty(), "Failed to read file name in archive: " + filename); // NOOOOO
-        FAIL_IF(file.fail(), "Read operation failed while reading file name in archive: " + filename);
+        // Unreal uses a compact integer format to store both the amound of files in the module
+        // and the length of each file name
 
-        entry_name_buf.push_back('\0'); // Garbage data shows up otherwise
-        auto entry_name = std::string(entry_name_buf.data());
-
-        // Trims unknown chars from the beginning of the filename (a consequence of not reading the length first)
-        bool found = false;
-        for (const auto& root_path: root_paths) {
-            if (const std::string::size_type pos = entry_name.find(root_path); pos != std::string::npos) {
-                record.filename = entry_name.substr(pos);
-                found = true;
-                break;
+        // Read the number of files in this UMOD
+        // We don't really need to use the value afterwards, but it's useful to run this
+        // so that way we can properly read the filename length that comes after
+        if (pass == 0) {
+            Index file_count{};
+            for (int i = 0; i < 5; i++) {
+                char c{}; file.get(c);
+                read_index_byte(c, i, file_count);
+                if (file_count.ok) break;
             }
         }
+        pass++;
 
-        // Our method for determining the correct location for the file relies entirely upon
-        // the file having a recognized path in its name. This should be extremely rare
-        // if not nonexistent, but it is still possible.
-        FAIL_IF(!found, "Failed to find root path in file name: " + entry_name);
+        // Get the length of the filename
+        Index filename_length{};
+        for (int i = 0; i < 5; i++) {
+            char c{}; file.get(c);
+            read_index_byte(c, i, filename_length);
+            if (filename_length.ok) break;
+        }
+        record.filename_length = filename_length;
+
+        // Now that we know the filename's length, we can read exactly that amount
+        // of bytes worry-free (hopefully)
+        std::vector<char> entry_name_buf(filename_length.value);
+        entry_name_buf.resize(filename_length.value);
+        file.read(entry_name_buf.data(), filename_length.value);
+        FAIL_IF(file.fail(), "Read operation failed while reading file name in archive: " + filename); // Why
+
+        record.filename = std::string(entry_name_buf.data());
 
         // Read the file offset, size, and flags
         file.read(reinterpret_cast<char *>(&record.file_offset), sizeof(uint32_t));
@@ -105,16 +151,15 @@ int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::pat
             FAIL_EC(create_directories(file_path.parent_path(), EC), "Error creating paths for " + str(file_path));
         }
 
-        // todo: there was a reason this was initially converted to an std::string, but until i test this
-        //       again i really dont think this is necessary
         // Write the extracted contents to file
-        const std::string contents_str(contents.data(), record.file_size);
-        std::ofstream out(file_path, std::ios::out | std::ios::binary);
-        FAIL_IF(!out.is_open(), "Error opening file for writing: " + file_path.string());
+        std::ofstream file_out(file_path, std::ios::out | std::ios::binary);
+        FAIL_IF(!file_out.is_open(), "Error opening file for writing: " + file_path.string());
 
-        out << contents_str;
-        out.close();
-        FAIL_IF(out.is_open(), "Failed to write file: " + file_path.string());
+        file_out.write(contents.data(), record.file_size);
+        FAIL_IF(file_out.fail(), "Failed to write to file " + file_path.string());
+
+        file_out.close();
+        FAIL_IF(file_out.is_open(), "Failed to close file " + file_path.string());
     }
 
     file.close();
@@ -124,7 +169,7 @@ int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::pat
 
 int extract_umod(const ModFile &mod, const fs::path &store_path) {
     const std::string prefix = gray("[UMOD] ") + yellow("["+mod.name+"] ");
-    std::cout << prefix << " Reading file " << underline(mod.path) << std::endl;
+    std::cout << prefix << "Reading file " << underline(mod.path) << std::endl;
 
     // Attempt to parse the UMOD header
     UMODHeader header{};
@@ -148,7 +193,8 @@ int extract_umod(const ModFile &mod, const fs::path &store_path) {
     // Extract each file
     for (UMODFileRecord &record: dir.records) {
         std::cout << prefix << "Extracting " << green(record.filename) << gray(
-            " (offset: " + std::to_string(record.file_offset) +
+            " (len: " + std::to_string(record.filename_length.value-1) +
+            ", offset: " + std::to_string(record.file_offset) +
             ", size: " + std::to_string(record.file_size) +
             ", flags: 0x" + std::to_string(record.file_flags) +
         ")") << std::endl;
