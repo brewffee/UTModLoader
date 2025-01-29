@@ -17,7 +17,7 @@ struct ModFile {
     bool ok = false;
 };
 
-inline const std::map<std::string, ModType> valid_extensions = {
+inline const std::map<std::filesystem::path, ModType> valid_extensions = {
     { ".umod", UMOD },
     { ".zip",  ZIP  },
     { ".rar",  RAR  }

@@ -1,8 +1,9 @@
 #include "extract.h"
-#include "../util.h"
 #include "../formats/rar.h"
 #include "../formats/umod.h"
 #include "../formats/zip.h"
+#include "../util/error.h"
+#include "../util/str.h"
 
 #if _WIN32
     #include <shlobj.h>
@@ -16,11 +17,11 @@
 namespace fs = std::filesystem;
 
 ModFile get_mod_file(const fs::path &path) {
-    const auto ext = path.extension().string();
+    const auto ext = path.extension();
 
     if (const auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
-        std::cout << "Located possible mod file: " << magenta(path.filename().string()) << std::endl;
-        return ModFile { path.stem().string(), path, i -> second, true };
+        std::cout << "Located possible mod file: " << magenta(path.filename()) << std::endl;
+        return ModFile { str(path.stem()), path, i -> second, true };
     }
 
     return ModFile{};
@@ -40,7 +41,7 @@ std::vector<ModFile> locate_mods(const fs::path &path) {
         if (const ModFile m = get_mod_file(path); m.ok) {
             mods.push_back(m);
         } else {
-            std::cout << "Invalid mod file " << magenta(path.filename().string()) << std::endl;
+            std::cout << "Invalid mod file " << magenta(path.filename()) << std::endl;
         }
     }
 
@@ -83,9 +84,9 @@ int extract_mods(const std::string &search_path) {
     std::cout << "Found store path: " << store_path << std::endl;
 
     int error{};
-    for (int i = 0; i < mods.size(); i++) {
+    for (std::size_t i = 0; i < mods.size(); ++i) {
         std::cout << "Extracting " << mods[i].name << "... " <<
-            gray("(" + std::to_string(i + 1) + " of " + std::to_string(mods.size()) + ")")
+            gray("(" + str(i + 1) + " of " + str(mods.size()) + ")")
         << std::endl;
 
         switch (mods[i].type) {

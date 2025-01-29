@@ -82,7 +82,7 @@ enum UMODInstallationFlags: uint8_t {
  *
  * @return 0 on success, 1 on failure
  */
-int parse_umod_header(const std::string& filename, UMODHeader& header);
+int parse_umod_header(const std::filesystem::path &filename, UMODHeader &header);
 
 /**
  * Parses the file directory of a UMOD file.
@@ -93,7 +93,7 @@ int parse_umod_header(const std::string& filename, UMODHeader& header);
  *
  * @return 0 on success, 1 on failure
  */
-int parse_umod_file_directory(const std::string &filename, UMODFileDirectory &dir, const UMODHeader &header);
+int parse_umod_file_directory(const std::filesystem::path &filename, UMODFileDirectory &dir, const UMODHeader &header);
 
 /**
  * Extracts a single file from a UMOD file.

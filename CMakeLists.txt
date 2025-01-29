@@ -42,8 +42,19 @@ if (WIN32)
     link_directories("${MINGW_PFX}/lib/")
 endif()
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${BUILD_LINK_LIBS})
+target_compile_options(${PROJECT_NAME} INTERFACE -Wall -Wextra -Werror -Wfatal-errors)
+target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:DEBUG>:-g -Wpedantic -pedantic-errors>)
+target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:RELEASE>:-O3>)
 
 # Post-build configuration
 if (WIN32)

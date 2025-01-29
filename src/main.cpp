@@ -7,10 +7,8 @@
 #include <vector>
 
 #include "config.h"
-#include "util.h"
 #include "commands/extract.h"
-
-using str = std::string;
+#include "util/container.h"
 
 int main(const int argc, char* argv[]) {
     const std::string usage_str = "Usage: utmodloader [options] <command> <path>\n"
@@ -27,7 +25,7 @@ int main(const int argc, char* argv[]) {
 
     const std::vector<std::string> args(argv, argv + argc);
 
-    // Check if flags are present anywhere in args
+    // This program only accepts global flags, so we can check here safely
     if (find_in(args, "-h") || find_in(args, "--help")) {
         std::cout << usage_str << std::endl;
         return EXIT_SUCCESS;
@@ -39,11 +37,9 @@ int main(const int argc, char* argv[]) {
     }
 
     // Subcommands
-    for (int i = 1; i < args.size(); i++) {
+    for (std::size_t i = 1; i < args.size(); ++i) {
         if (args[i] == "extract") {
             if (i + 1 < args.size()) {
-                // 'extract' takes no flags, and accepts one argument, so
-                // there's no need to check before running
                 return extract_mods(args[i + 1]);
             }
 
