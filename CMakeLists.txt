@@ -23,32 +23,29 @@ configure_file(src/config/config.h.in config.h)
 include_directories(${PROJECT_BINARY_DIR})
 
 # Dependencies
-find_package(libzip REQUIRED)
+if (WIN32)
+    set(UNRAR_LIB "unrar64")
+else()
+    set(UNRAR_LIB "unrar")
+endif()
+
 set(BUILD_LINK_LIBS
-    zip unarr
+    zip ${UNRAR_LIB}
 )
 
-# On windows, search MINGW for include paths
+# On Windows, search MINGW for include paths
 if (WIN32)
-    # NOTE: I installed libzip using the mingw-w64-x86_64-libzip package, but
-    # libunarr was installed using the AUR (unmodified PKGBUILD), so we need to
-    # include it's files from MSYS_PFX
-    # todo: can this be made a little easier ?
-
-    set(MSYS_PFX "C:/msys64/msys64/usr")
     set(MINGW_PFX "C:/msys64/mingw64")
-    set(CMAKE_PREFIX_PATH "${MINGW_PFX}/include/;${MSYS_PFX}/include/")
-    link_directories("${MSYS_PFX}/lib/")
+    set(WIN_PFX "C:/Program Files\ (x86)/UnrarDLL")     # UnRAR is installed outside of MinGW
+    set(CMAKE_PREFIX_PATH "${MINGW_PFX}/include/;${WIN_PFX}/;${WIN_PFX}/x64/")
+    link_directories("${WIN_PFX}/x64/")
     link_directories("${MINGW_PFX}/lib/")
 endif()
 
+# Build configuration
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
-
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${BUILD_LINK_LIBS})
@@ -61,6 +58,7 @@ if (WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_PREFIX_PATH})
 
     add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "${MSYS_PFX}/bin/libunarr.dll" "${CMAKE_BINARY_DIR}/libunarr.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy "${MINGW_PFX}/bin/libzip.dll" "${CMAKE_BINARY_DIR}/libzip.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy "${WIN_PFX}/x64/UnRAR64.dll" "${CMAKE_BINARY_DIR}/UnRAR64.dll"
     )
 endif()

@@ -15,33 +15,27 @@ utmodloader [options] <command> <path>
 
 Valid mod file types include `.zip`, `.rar`, and `.umod`.
 
-## Building
+## Building from source
 You will need (this is subject to change):
 - [cmake](https://cmake.org/): version  >= 3.29
 - [libzip](https://www.libzip.org/): version  >= 1.11.2
-- [libunarr](https://github.com/selmf/unarr): version  >= 1.1.1
+- [libunrar](https://www.rarlab.com/rar_add.htm): version  >= 7.1.3
 
 ### Dependencies (Linux)
 
 #### Arch Linux
-Replace `yay` with your AUR helper of choice
 ```
-yay -S --needed git base-devel g++ cmake libzip libunarr
+pacman -S --needed git base-devel g++ cmake libzip libunrar
 ```
 
 ### Dependencies (Windows)
 
-Requires [MSYS2](https://www.msys2.org/) and [mingw-w64](https://mingw-w64.org/) to be installed at `C:\msys64\`
+Requires [MSYS2](https://www.msys2.org/) to be installed at `C:\msys64\`
 ```
-pacman -S --needed git base-devel mingw-w64-x86_64-{gcc,headers-git,cmake,libzip}
+pacman -S --needed git base-devel unrar mingw-w64-x86_64-{gcc,headers-git,cmake,libzip}
 ```
 
-
-```
-git clone https://aur.archlinux.org/libunarr.git
-cd libunarr
-makepkg -si
-```
+Get UnRAR.dll from [RARLAB](https://www.rarlab.com/rar_add.htm) and install it to the default location (`C:\Program Files (x86)\UnrarDLL`)
 
 ### Building
 ```
