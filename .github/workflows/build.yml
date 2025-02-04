@@ -1,0 +1,37 @@
+name: CMake Build and Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git build-essential g++-14 ninja-build libzip-dev zipcmp zipmerge ziptool libbz2-dev liblzma-dev libunrar-dev
+          wget https://cmake.org/files/v3.29/cmake-3.29.0-linux-x86_64.sh
+          sudo sh cmake-3.29.0-linux-x86_64.sh --prefix=/usr/local --exclude-subdir
+          rm cmake-3.29.0-linux-x86_64.sh
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+      - name: Configure CMake
+        run: |
+          mkdir cmake-build 
+          cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_MAKE_PROGRAM=ninja -G Ninja -B ${{github.workspace}}/cmake-build -S ${{github.workspace}}
+      - name: Build
+        run: cmake --build ${{github.workspace}}/cmake-build --target UTModLoader --config ${{env.BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/cmake-build
+        # todo: Add test file
+        run: ${{github.workspace}}/cmake-build/UTModLoader --version
