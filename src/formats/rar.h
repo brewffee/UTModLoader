@@ -2,6 +2,7 @@
 #define RAR_H
 
 #include <filesystem>
+
 #include "../modfile.h"
 
 /**

@@ -1,8 +1,6 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <iostream>
-
 /**
  * Adds concatenation support for paths on Windows
  */

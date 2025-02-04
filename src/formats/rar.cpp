@@ -9,7 +9,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <vector>
 
 #ifdef __linux__
     #include <unrar/dll.hpp>
@@ -76,11 +75,11 @@ int extract_rar(const ModFile &mod, const fs::path &store_path) {
         FAIL_IF(result != ERAR_SUCCESS, "Failed to extract file: " + str(name));
 
         [[unlikely]] if (is_impostor) {
-            // Delete evbery file in the directory we created except for the UMOD file
+            // Delete every file in the directory we created except for the UMOD file
             for (const auto &entry: fs::directory_iterator(mod_path)) {
                 if (entry.path().extension() != ".umod") {
                     std::cout << prefix << "Deleting outdated file " << gray(entry.path()) << std::endl;
-                    FAIL_WITH(!fs::remove_all(entry.path()), "Failed to remove file " + entry.path());
+                    FAIL_EC(fs::remove_all(entry.path(), EC), "Failed to remove file " + entry.path());
                 }
             }
 
@@ -89,13 +88,13 @@ int extract_rar(const ModFile &mod, const fs::path &store_path) {
             if (const int estatus = extract_umod(umod, store_path); estatus == 0) {
                 // Delete the UMOD file
                 std::cout << prefix << "Deleting UMOD file " << gray(umod.path) << std::endl;
-                FAIL_WITH(!fs::remove(umod.path), "Failed to remove file " + umod.path);
+                FAIL_EC(fs::remove(umod.path, EC), "Failed to remove file " + umod.path);
 
                 // If the old directory is left empty (can occur when the UMOD has different case
                 // or spelling than the original archive), delete it
                 if (is_empty(mod_path)) {
                     std::cout << prefix << "Deleting outdated directory " << gray(mod_path) << std::endl;
-                    FAIL_WITH(!fs::remove(mod_path), "Failed to remove directory " + mod_path);
+                    FAIL_EC(!fs::remove(mod_path, EC), "Failed to remove directory " + mod_path);
                 }
             } else {
                 return estatus;

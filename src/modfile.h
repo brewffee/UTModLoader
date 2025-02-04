@@ -2,7 +2,6 @@
 #define MODFILE_H
 
 #include <map>
-#include <string>
 
 enum ModType: uint8_t {
     UMOD,

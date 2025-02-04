@@ -2,7 +2,6 @@
 #define EXTRACT_H
 
 #include <filesystem>
-#include <string>
 #include <vector>
 
 #include "../modfile.h"

@@ -1,9 +1,7 @@
 #ifndef UMOD_H
 #define UMOD_H
 
-#include <cstdint>
 #include <filesystem>
-#include <string>
 #include <vector>
 
 #include "../modfile.h"
@@ -70,8 +68,8 @@ struct UMODFileDirectory {
 
 // Installation flags for UMOD files
 enum UMODInstallationFlags: uint8_t {
-    NoCopy = 0x3, // Don't copy this file to the user's System directory
-    None = 0x0  // Default
+    NO_COPY = 0x3, // Don't copy this file to the user's System directory
+    NONE = 0x0  // Default
 };
 
 /**

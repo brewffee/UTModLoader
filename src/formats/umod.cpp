@@ -1,4 +1,3 @@
-#include <bitset>
 #include <fstream>
 #include <iostream>
 
@@ -19,7 +18,6 @@ void read_index_byte(const char c, const int i, Index &index) {
     if (i == 0) {
         sign = c & 0x80; /* X0000000 */
         index.value = c & 0x3F; /* 00XXXXXX */
-
         if ((c & 0x40) == 0) { /* 0X000000 */
             if (sign) index.value *= -1;
             index.ok = true;
@@ -29,7 +27,6 @@ void read_index_byte(const char c, const int i, Index &index) {
     // Final byte
     else if (i == 4) {
         index.value |= (c & 0x80) << index.prev_bit_len; /* X0000000 */
-
         index.value *= -sign;
         index.ok = true;
     }
@@ -39,7 +36,6 @@ void read_index_byte(const char c, const int i, Index &index) {
         constexpr int MIDDLE_BIT_LEN = 7;
         index.value |= (c & 0x7F) << index.prev_bit_len; /* 0XXXXXXX */
         index.prev_bit_len += MIDDLE_BIT_LEN;
-
         if ((c & 0x80) == 0) { /* X0000000 */
             index.value *= -sign;
             index.ok = true;
@@ -74,14 +70,14 @@ int parse_umod_file_directory(const fs::path &filename, UMODFileDirectory &dir, 
     while (file.good() && file.tellg() < header.size - HEADER_SIZE) {
         UMODFileRecord record{};
 
-        // Unreal uses a compact integer format to store both the amound of files in the module
+        // Unreal uses a compact integer format to store both the amount of files in the module
         // and the length of each file name
 
         // Read the number of files in this UMOD
         // We don't really need to use the value afterwards, but it's useful to run this
         // so that way we can properly read the filename length that comes after
         if (pass == 0) {
-            Index file_count{};
+            Index file_count{}; // Index types force us to read byte by byte until value is ok
             for (int i = 0; i < 5; ++i) {
                 char c{}; file.get(c);
                 read_index_byte(c, i, file_count);
@@ -159,8 +155,6 @@ int extract_umod_entry(const ModFile &mod, UMODFileRecord &record, const fs::pat
         FAIL_IF(file_out.is_open(), "Failed to close file " + file_path);
     }
 
-    file.close();
-    FAIL_IF(file.is_open(), "Failed to close UMOD file while extracting: " + mod.path);
     return 0;
 }
 

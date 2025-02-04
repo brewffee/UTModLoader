@@ -17,9 +17,7 @@
 namespace fs = std::filesystem;
 
 ModFile get_mod_file(const fs::path &path) {
-    const auto ext = path.extension();
-
-    if (const auto i = valid_extensions.find(ext); i != valid_extensions.end()) {
+    if (const auto i = valid_extensions.find(path.extension()); i != valid_extensions.end()) {
         std::cout << "Located possible mod file: " << magenta(path.filename()) << std::endl;
         return ModFile { str(path.stem()), path, i -> second, true };
     }
@@ -63,7 +61,7 @@ int extract_mods(const std::string &search_path) {
             user_dir = getpwuid(getuid()) -> pw_dir;
         }
 
-        if (user_dir == nullptr) {
+        if (!user_dir) {
             std::cerr << "Failed to get user directory" << std::endl;
             return 1;
         }
@@ -90,15 +88,9 @@ int extract_mods(const std::string &search_path) {
         << std::endl;
 
         switch (mods[i].type) {
-            case UMOD:
-                error = extract_umod(mods[i], store_path);
-                break;
-            case ZIP:
-                error = extract_zip(mods[i], store_path);
-                break;
-            case RAR:
-                error = extract_rar(mods[i], store_path);
-                break;
+            case UMOD: error = extract_umod(mods[i], store_path); break;
+            case ZIP:  error = extract_zip(mods[i], store_path);  break;
+            case RAR:  error = extract_rar(mods[i], store_path);  break;
         }
     }
 
