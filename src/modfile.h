@@ -10,9 +10,9 @@ enum ModType: uint8_t {
 };
 
 struct ModFile {
-    std::string name;
-    std::filesystem::path path;
-    ModType type;
+    std::string name{};
+    std::filesystem::path path{};
+    ModType type{};
     bool ok = false;
 };
 

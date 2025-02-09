@@ -40,7 +40,8 @@ int main(const int argc, char* argv[]) {
                 return extract_mods(args[i + 1].data());
             }
 
-            throw std::runtime_error("No path specified");
+            std::cout << "No path specified" << std::endl;
+            return EXIT_FAILURE;
         }
     }
 

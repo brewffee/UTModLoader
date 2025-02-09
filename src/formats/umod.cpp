@@ -19,7 +19,7 @@ void read_index_byte(const char c, const int i, Index &index) {
         sign = c & 0x80; /* X0000000 */
         index.value = c & 0x3F; /* 00XXXXXX */
         if ((c & 0x40) == 0) { /* 0X000000 */
-            if (sign) index.value *= -1;
+            if (sign != 0) index.value *= -1;
             index.ok = true;
         }
     }
@@ -98,7 +98,7 @@ int parse_umod_file_directory(const fs::path &filename, UMODFileDirectory &dir, 
         // Now that we know the filename's length, we can read exactly that amount
         // of bytes worry-free (hopefully)
         record.filename.resize(filename_length.value - 1);
-        file.read(&record.filename[0], filename_length.value);
+        file.read(record.filename.data(), filename_length.value);
         FAIL_IF(file.fail(), "Read operation failed while reading file name in archive: " + filename); // Why
 
         // Read the file offset, size, and flags

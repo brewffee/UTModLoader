@@ -61,7 +61,7 @@ int extract_mods(const std::string &search_path) {
             user_dir = getpwuid(getuid()) -> pw_dir;
         }
 
-        if (!user_dir) {
+        if (user_dir == nullptr) {
             std::cerr << "Failed to get user directory" << std::endl;
             return 1;
         }

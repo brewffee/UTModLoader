@@ -71,7 +71,7 @@ int extract_rar(const ModFile &mod, const fs::path &store_path) {
         strcpy(dest_path, str(file_path).c_str());
 
         // Process the file contents
-        int result = RARProcessFile(handle, RAR_EXTRACT, dest_path, dest_path);
+        const int result = RARProcessFile(handle, RAR_EXTRACT, dest_path, dest_path);
         FAIL_IF(result != ERAR_SUCCESS, "Failed to extract file: " + str(name));
 
         [[unlikely]] if (is_impostor) {
