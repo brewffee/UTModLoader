@@ -15,6 +15,7 @@ static const std::string usage_str =
     "    extract          Extract mod files. Accepts a directory or a single file path";
 
 int main(const int argc, char* argv[]) {
+    // todo: read mod information, store mod information, and retrieve mod information
     const std::vector<std::string_view> args(argv, argv + argc);
 
     if (args.size() == 1) {

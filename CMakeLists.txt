@@ -17,6 +17,8 @@ set(SOURCES
     src/util/error.h
     src/util/container.h
     src/util/str.h
+    src/ModData.cpp
+    src/ModData.h
 )
 
 configure_file(src/config/config.h.in config.h)
